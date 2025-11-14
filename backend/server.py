@@ -7,6 +7,7 @@ from ortools.constraint_solver import pywrapcp
 
 app = FastAPI()
 
+# Allow frontend to fetch from any origin
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -14,6 +15,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Load initial trucks and deliveries
 with open('input.json', 'r') as f:
     DATA = json.load(f)
 
@@ -59,10 +61,10 @@ def optimize_routes(trucks, deliveries):
                 node = manager.IndexToNode(index)
                 vehicle_route.append(deliveries[node])
                 index = solution.Value(routing.NextVar(index))
-            routes[trucks[vehicle_id]['id']] = vehicle_route
+            routes[str(trucks[vehicle_id]['id'])] = vehicle_route
     else:
         for i, truck in enumerate(trucks):
-            routes[truck['id']] = deliveries[i::len(trucks)]
+            routes[str(truck['id'])] = deliveries[i::len(trucks)]
 
     return routes
 
