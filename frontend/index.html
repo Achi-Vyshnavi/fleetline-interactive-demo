@@ -34,9 +34,12 @@
       {id:4, lat:28.4089, lng:77.3178, weight:12}
     ];
 
+    // Replace this with your deployed backend URL after Render
+    const backendUrl = 'https://fleetline-demo.onrender.com/routes';
+
     async function fetchRoutes() {
       try {
-        const response = await fetch('http://127.0.0.1:8000/routes', {
+        const response = await fetch(backendUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ trucks, deliveries })
