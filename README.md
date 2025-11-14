@@ -15,3 +15,10 @@
    cd backend
    pip install -r requirements.txt
    uvicorn server:app --reload
+   Frontend:
+
+cd frontend
+start index.html
+
+
+Click anywhere on the map to add a new delivery and watch routes recalc dynamically.
