@@ -34,8 +34,8 @@
       {id:4, lat:28.4089, lng:77.3178, weight:12}
     ];
 
-    // Replace this with your deployed backend URL after Render
-    const backendUrl = 'https://fleetline-demo.onrender.com/routes';
+    // 🔹 Updated backend URL to deployed Render service
+    const backendUrl = 'https://fleetline-interactive-demo-1.onrender.com/routes';
 
     async function fetchRoutes() {
       try {
@@ -46,10 +46,12 @@
         });
         const data = await response.json();
 
+        // Clear previous layers
         map.eachLayer(layer => {
           if (layer instanceof L.Polyline || layer instanceof L.Marker) map.removeLayer(layer);
         });
 
+        // Draw routes & markers
         const colors = ["red", "blue", "green", "orange", "purple", "brown"];
         let i = 0;
         Object.keys(data).forEach(truck_id => {
@@ -64,6 +66,7 @@
           });
         });
 
+        // Human-readable output
         displayRoutes(data);
 
       } catch(err) {
@@ -84,6 +87,7 @@
       document.getElementById('output').textContent = output;
     }
 
+    // Click map to add delivery
     map.on('click', function(e) {
       const lat = e.latlng.lat;
       const lng = e.latlng.lng;
@@ -93,6 +97,7 @@
       fetchRoutes();
     });
 
+    // Initial load
     fetchRoutes();
   </script>
 </body>
