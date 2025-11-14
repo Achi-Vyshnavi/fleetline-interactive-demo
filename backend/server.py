@@ -2,10 +2,13 @@ import json
 import random
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from ortools.constraint_solver import routing_enums_pb2
-from ortools.constraint_solver import pywrapcp
+from fastapi.staticfiles import StaticFiles
+from ortools.constraint_solver import routing_enums_pb2, pywrapcp
 
 app = FastAPI()
+
+# Serve frontend folder
+app.mount("/", StaticFiles(directory="../frontend", html=True), name="frontend")
 
 # Allow frontend to fetch from any origin
 app.add_middleware(
@@ -72,14 +75,11 @@ def optimize_routes(trucks, deliveries):
 def get_routes():
     trucks = DATA['trucks']
     deliveries = add_traffic_eta(DATA['deliveries'])
-    routes = optimize_routes(trucks, deliveries)
-    return routes
+    return optimize_routes(trucks, deliveries)
 
 @app.post("/routes")
 async def recalc_routes(request: Request):
     data = await request.json()
     trucks = data['trucks']
-    deliveries = data['deliveries']
-    deliveries = add_traffic_eta(deliveries)
-    routes = optimize_routes(trucks, deliveries)
-    return routes
+    deliveries = add_traffic_eta(data['deliveries'])
+    return optimize_routes(trucks, deliveries)
