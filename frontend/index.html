@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Fleetline Interactive Demo</title>
+  <meta charset="utf-8" />
+  <style>
+    #map { height: 500px; width: 100%; margin-bottom: 20px; }
+    body { font-family: Arial; margin: 20px; }
+    pre { max-height: 300px; overflow-y: scroll; background: #f5f5f5; padding: 10px; }
+    button { margin-bottom: 10px; }
+  </style>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+</head>
+<body>
+  <h2>Fleetline Interactive Optimization Demo</h2>
+  <button onclick="fetchRoutes()">Recalculate Routes</button>
+  <div id="map"></div>
+  <pre id="output">Loading routes...</pre>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([28.6, 77.1], 10);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+
+    let trucks = [
+      {id:1, capacity:100},
+      {id:2, capacity:100}
+    ];
+
+    let deliveries = [
+      {id:1, lat:28.7041, lng:77.1025, weight:10},
+      {id:2, lat:28.5355, lng:77.391, weight:20},
+      {id:3, lat:28.4595, lng:77.0266, weight:15},
+      {id:4, lat:28.4089, lng:77.3178, weight:12}
+    ];
+
+    async function fetchRoutes() {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/routes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ trucks, deliveries })
+        });
+        const data = await response.json();
+
+        map.eachLayer(layer => {
+          if (layer instanceof L.Polyline || layer instanceof L.Marker) map.removeLayer(layer);
+        });
+
+        const colors = ["red", "blue", "green", "orange", "purple", "brown"];
+        let i = 0;
+        Object.keys(data).forEach(truck_id => {
+          const truckDeliveries = data[truck_id];
+          const color = colors[i % colors.length];
+          i++;
+          const latlngs = truckDeliveries.map(d => [d.lat, d.lng]);
+          L.polyline(latlngs, { color, weight: 4 }).addTo(map);
+          truckDeliveries.forEach(d => {
+            L.marker([d.lat, d.lng]).addTo(map)
+              .bindPopup(`Truck ${truck_id} | Delivery ${d.id} | ETA: ${d.eta} mins`);
+          });
+        });
+
+        displayRoutes(data);
+
+      } catch(err) {
+        console.error(err);
+        document.getElementById('output').textContent = "Failed to fetch routes. Make sure backend is running.";
+      }
+    }
+
+    function displayRoutes(data) {
+      let output = "";
+      Object.keys(data).forEach(truck_id => {
+        output += `Truck ${truck_id}:\n`;
+        data[truck_id].forEach(d => {
+          output += `  Delivery ${d.id} → (${d.lat.toFixed(3)}, ${d.lng.toFixed(3)}), Weight: ${d.weight}, ETA: ${d.eta} mins\n`;
+        });
+        output += "\n";
+      });
+      document.getElementById('output').textContent = output;
+    }
+
+    map.on('click', function(e) {
+      const lat = e.latlng.lat;
+      const lng = e.latlng.lng;
+      const newId = Date.now();
+      deliveries.push({ id: newId, lat, lng, weight: 10 });
+      L.marker([lat, lng]).addTo(map).bindPopup(`New delivery ${newId}`).openPopup();
+      fetchRoutes();
+    });
+
+    fetchRoutes();
+  </script>
+</body>
+</html>
